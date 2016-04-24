@@ -1,152 +1,241 @@
-function buildSVG(obj) {
+var SVGGraph = {};
+SVGGraph.xmlns = 'http://www.w3.org/2000/svg'
+SVGGraph.utils = {};
+SVGGraph.graph = {};
 
+SVGGraph.utils.createSVG = function(obj) {
+  var svg = document.createElementNS(SVGGraph.xmlns, 'svg');
+  svg.setAttribute('xmlns', SVGGraph.xmlns);
+  for(var key in obj) {
+    svg.setAttribute(key, obj[key]);
+  }
+  return svg;
+};
+
+SVGGraph.utils.createSVGElement = function(tagName, obj, innerSVG) {
+  var element = document.createElementNS(SVGGraph.xmlns, tagName);
+  for(var key in obj) {
+    element.setAttribute(key, obj[key]);
+  }
+  if (innerSVG) { element.innerHTML = innerSVG; }
+  return element;
+};
+
+SVGGraph.graph.radarChart = function(obj) {
+  obj.graph = obj.graph || {};
+  obj.graph.border = obj.graph.border || {};
+  obj.graph.font = obj.graph.font || {};
+  obj.graph.guides = obj.graph.guides || {};
+  obj.graph.labels = obj.graph.labels || {};
+  obj.graph.values = obj.graph.values || {};
   var c = {
-    border: {color:"#444", width:2},
-    fontFamily: (obj.font || "sans-serif"),
-    guides: {color:"#888", width:1}, 
-    labelFont: {color:"#333",size:obj.size/23},
-    legendFont: {color:"#333",size:obj.size/21},
-    length: obj.show.length,
-    radius: obj.size/2*0.9,
-    size: obj.size,
-    values: {color:"#333", width:3}
+    border: {
+      color: (obj.graph.border.color || "#444"),
+      width: (obj.graph.border.width || 2)
+    },
+    font: {
+      color:  (obj.graph.font.color  || "#333"),
+      family: (obj.graph.font.family || "sans-serif"),
+      size:   (obj.graph.font.size   || obj.size/25)
+    },
+    guides: {
+      color: (obj.graph.guides.color || "#888"),
+      width: (obj.graph.guides.width || 1)
+    },
+    labels: {
+      padding: (obj.graph.labels.padding || 1)*10,
+      rotate: (obj.graph.labels.rotate)
+    },
+    legend: (obj.graph.legend || 0),
+    length: (obj.show || obj.data.labels).length,
+    radius: (obj.graph.radius || 0.7)*obj.size/2,
+    bounds:  (obj.graph.bounds || [0.0, 1.0, 0.5]),
+    size:   obj.size,
+    values: { // default values for data lines
+      color: (obj.graph.values.color || "#333"),
+      fill: (obj.graph.values.fill  || "transparent"),
+      width: (obj.graph.values.color || 3)
+    }
   };
 
-  function line(x1, y1, x2, y2, color, width) {
-    return '<line x1="' + x1 + '" y1="' + y1 + 
-      '" x2="' + x2 + '" y2="' + y2 + 
-      '" stroke="' + color + 
-      '" stroke-width="' + width + '"/>';
-  }
+  function startTheta() { return Math.PI/2 - Math.PI/c.length; }
+  function delta() { return -2*Math.PI/c.length; }
 
-  function ellipse(x, y, width, height, color) {
-    return '<ellipse cx="' + x + '" cy="' + y + 
-      '" rx="' + width + '" ry="' + height + 
-      '" fill="' + color + '"/>';
-  }
-
-  function rotatedText(cx, cy, dx, dy, displayText, fontSize, rotation) {
-    var turn = ((rotation*180/Math.PI)+450)%360; // rotation relative to upright
-    if (turn > 90 && turn < 270) { 
-      turn += 180;
-      cx += 2*(c.radius+c.labelFont.size/2)*Math.cos(rotation);
-      cy += 2*(c.radius+c.labelFont.size/2)*Math.sin(rotation);
-    }
-    return '<text x="' + (cx+dx) + '" y="' + (cy+dy-3) + 
-      '" font-family="' + c.fontFamily + 
-      '" font-size="' + c.labelFont.size + 
-      '" text-anchor="middle"' + 
-      '  transform="rotate(' + 
-      turn + ' ' + cx + ',' + cy + ')"' +
-      '>' + displayText + '</text>';
-  }
-
-  function text(x, y, displayText, fontSize) {
-    return '<text x="' + x + '" y="' + y + 
-      '" font-family="' + c.fontFamily + 
-      '" font-size="' + fontSize + '">' + displayText + '</text>';
-  }
-
-  function svgOpen() {
-    return '<svg xmlns="http://www.w3.org/2000/svg" ' + 
-      'width="' + (c.size+obj.legend) + '" height="' + c.size + 
-      '">' 
-  }
-
-  function svgClose() {
-    return '</svg>';
-  }
-
-  function startDelta() {
-    return Math.PI/2 - Math.PI/c.length;
-  }
-
-  function buildBackground() {
-    var xml = "";
-    var delta = startDelta();
-    var points = [];
+  function drawChart(svg) {
+    var theta = startTheta();
+    var ticks = [];
+    var border = [];
     for (var i = 0; i < c.length; i++) {
-      delta -= 2*Math.PI/c.length;
-      delta %= 2*Math.PI;
+      theta %= 2*Math.PI;
       var point = [
-        c.size/2+c.radius*Math.cos(delta), 
-        c.size/2+c.radius*Math.sin(delta),
-        c.size/2+c.radius/2*Math.cos(delta), 
-        c.size/2+c.radius/2*Math.sin(delta)
+        c.radius*Math.cos(theta),
+        c.radius*Math.sin(theta)
       ];
-      xml += line(c.size/2, c.size/2, point[0], point[1], 
-          c.guides.color, c.guides.width);
-      xml += rotatedText(c.size/2, c.size/2, 0, -c.radius, 
-          obj.data.labels[obj.show[i]], c.labelFont.size, delta);
-      points.push(point);
-    }
-    for (var i = 1; i < points.length; i++) {
-      xml += line(points[i-1][0], points[i-1][1],
-          points[i][0], points[i][1], 
-          c.border.color, c.border.width);
-      xml += line(points[i-1][2], points[i-1][3],
-          points[i][2], points[i][3], 
-          c.guides.color, c.guides.width);
-    }
-    xml += line(points[0][0], points[0][1],
-        points[points.length-1][0], points[points.length-1][1], 
-        c.border.color, c.border.width);
-    xml += line(points[0][2], points[0][3],
-        points[points.length-1][2], points[points.length-1][3], 
-        c.guides.color, c.guides.width);
-    return xml;
-  }
-
-  function drawLegend() {
-    var xml = "";
-    if (obj.legend) {
-      var i = 0;
-      for(var key in obj.data) {
-        if(obj.keys.indexOf(key) >= 0) {
-          xml += ellipse(c.size+20, 20+i*1.5*c.legendFont.size, 4, 4, obj.data[key].color);
-          xml += text(c.size+30, (1.75+i*1.5)*c.legendFont.size, key, c.legendFont.size);
-          i++;
+      border.push(point);
+      svg.appendChild(SVGGraph.utils.createSVGElement('line', {
+        x1: 0,
+        y1: 0,
+        x2: point[0],
+        y2: point[1],
+        stroke: c.guides.color,
+        "stroke-width": c.guides.width
+      }));
+      var label = "";
+      if (obj.show) {
+        label = obj.data.labels[obj.show[i]];
+      } else {
+        label = obj.data.labels[i];
+      }
+      var lcm = "middle";
+      var txtloc = [(c.radius+c.labels.padding)*Math.cos(theta),
+          (c.radius+c.labels.padding)*Math.sin(theta)];
+      var rotation = "rotate(0 0,0)";
+      if (c.labels.rotate) {
+        txtloc = [0, -c.radius-c.labels.padding];
+        var center = [0,0]
+        var turn = ((theta*180/Math.PI)+450)%360;
+        if (turn > 90 && turn < 270) {
+          turn += 180;
+          center[0] = 2*(c.radius+c.font.size/3+c.labels.padding)*Math.cos(theta);
+          center[1] = 2*(c.radius+c.font.size/3+c.labels.padding)*Math.sin(theta);
+          txtloc[0] += center[0];
+          txtloc[1] += center[1];
         }
+        rotation = "rotate("+turn+" "+center[0]+","+center[1]+")";
+      } else {
+        var modtheta = (2*Math.PI+theta)%(2*Math.PI);
+        if (modtheta < 3*Math.PI/8 || modtheta > 13*Math.PI/8) { lcm = "start"; }
+        else if (modtheta > 5*Math.PI/8 && modtheta < 11*Math.PI/8) { lcm = "end"; }
+      }
+      svg.appendChild(SVGGraph.utils.createSVGElement('text', {
+        x: txtloc[0],
+        y: txtloc[1],
+        "font-size": c.font.size,
+        "font-family": c.font.family,
+        "text-anchor": lcm,
+        transform: rotation
+      }, label));
+      var tick = [];
+      for (var v = c.bounds[2]+c.bounds[0]; v < c.bounds[1]; v += c.bounds[2]) {
+        tick.push([
+          Math.cos(theta)*valueRadius(v),
+          Math.sin(theta)*valueRadius(v)
+        ]);
+      }
+      ticks.push(tick);
+      theta += delta();
+    }
+    if (ticks.length > 0) {
+      var ds = [];
+      for(var i = 0; i < ticks[0].length; i++) {
+        var d = "M" + ticks[0][i][0] + " " + ticks[0][i][1] + " ";
+        for(var j = 1; j < ticks.length; j++) {
+          d += "L " + ticks[j][i][0] + " " + ticks[j][i][1] + " ";
+        }
+        d += "Z";
+        ds.push(d);
+      }
+      for (var i = 0; i < ds.length; i++) {
+        svg.appendChild(SVGGraph.utils.createSVGElement('path', {
+          d: ds[i],
+          fill: "transparent",
+          stroke: c.guides.color,
+          "stroke-width": c.guides.width
+        }));
       }
     }
-    return xml;
+    var d = "M" + border[0][0] + " " + border[0][1] + " ";
+    for(var i = 1; i < border.length; i++) {
+      d += "L " + border[i][0] + " " + border[i][1] + " ";
+    }
+    d += "Z";
+    svg.appendChild(SVGGraph.utils.createSVGElement('path', {
+      d: d,
+      fill: "transparent",
+      stroke: c.border.color,
+      "stroke-linejoin": "round",
+      "stroke-width": c.border.width
+    }));
   }
 
-  function drawAllValues() {
-    var xml = "";
-    for(var key in obj.data) {
-      if (obj.keys.indexOf(key) >= 0) { xml += drawValues(key); }
-    }
-    return xml;
+  function valueRadius(val) {
+    return (val-c.bounds[0])/(c.bounds[1]-c.bounds[0])*c.radius;
   }
 
-  function drawValues(key) {
-    var delta = startDelta();
-    var points = [];
-    for(var i = 0; i < c.length; i++) {
-      var index = obj.show[i];
-      delta -= 2*Math.PI/c.length;
-      delta %= 2*Math.PI;
-      points.push([
-        c.size/2+c.radius*obj.data[key].values[index]*Math.cos(delta),
-        c.size/2+c.radius*obj.data[key].values[index]*Math.sin(delta)
-      ]);
-    }
-    var xml = "";
-    for (var i = 1; i < points.length; i++) {
-      xml += line(points[i-1][0], points[i-1][1],
-          points[i][0], points[i][1], 
-          obj.data[key].color || c.values.color, 
-          obj.data[key].width || c.values.width);
-    }
-    xml += line(points[0][0], points[0][1],
-        points[points.length-1][0], points[points.length-1][1], 
-        obj.data[key].color || c.values.color, 
-        obj.data[key].width || c.values.width);
-    return xml;
+  function keySet() {
+    return obj.keys || Object.keys(obj.data);
   }
 
-  return svgOpen() + buildBackground() + drawLegend() + 
-    drawAllValues() + svgClose();
+  function drawValues(svg) {
+    var keys = obj.keys || Object.keys(obj.data);
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (key != "labels") {
+        var theta = startTheta();
+        var index = 0;
+        if (obj.show) { index = obj.show[0]; }
+        var value = obj.data[key].values[index];
+        var d = "M" + (valueRadius(value)*Math.cos(theta)) + " " +
+          (valueRadius(value)*Math.sin(theta)) + " ";
+        for(var j = 1; j < c.length; j++) {
+          theta += delta();
+          index = obj.show ? obj.show[j] : j;
+          value = obj.data[key].values[index];
+          d += "L " + valueRadius(value)*Math.cos(theta) + " " +
+            valueRadius(value)*Math.sin(theta) + " ";
+        }
+        svg.appendChild(SVGGraph.utils.createSVGElement('path', {
+          d: (d+"Z"),
+          fill:   (obj.data[key].fill || c.values.fill),
+          stroke: (obj.data[key].color || c.values.color),
+          "stroke-linejoin": "round",
+          "stroke-width": (obj.data[key].width || c.values.width)
+        }));
+      }
+    }
+  }
 
-}
+  function drawLegend(svg) {
+    var keys = keySet();
+    var offset = 0;
+    for(var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (key != "labels") {
+        svg.appendChild(SVGGraph.utils.createSVGElement('ellipse', {
+          cx: c.size/2+20,
+          cy: -c.size/4+offset*c.font.size*1.5,
+          rx: c.font.size/4,
+          ry: c.font.size/4,
+          fill: obj.data[key].color
+        }));
+        svg.appendChild(SVGGraph.utils.createSVGElement('text', {
+          x: c.size/2+30,
+          y: -c.size/4+offset*c.font.size*1.5+0.3*c.font.size,
+          "font-family": c.font.family,
+          "font-size": c.font.size*1.1
+        }, key));
+        offset++;
+      }
+    }
+  }
+
+  var svg = SVGGraph.utils.createSVG({
+    height: c.size,
+    viewBox: (-c.size/2) + " " + (-c.size/2) + " " +
+      (c.size+c.legend) + " " + (c.size),
+    width:  c.size+c.legend
+  });
+  drawChart(svg);
+  if (c.legend) { drawLegend(svg); }
+  if (obj.title) {
+    svg.appendChild(SVGGraph.utils.createSVGElement('text', {
+      x: (c.size+c.legend-c.size)/2,
+      y: c.font.size*1.1-c.size/2,
+      "text-anchor": "middle",
+      "font-size": c.font.size*1.25,
+      "font-family": c.font.family
+    }, obj.title));
+  }
+  drawValues(svg);
+  return svg;
+};
