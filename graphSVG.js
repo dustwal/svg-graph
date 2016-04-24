@@ -31,7 +31,8 @@ SVGGraph.graph.radarChart = function(obj) {
   var c = {
     border: {
       color: (obj.graph.border.color || "#444"),
-      width: (obj.graph.border.width || 2)
+      width: (obj.graph.border.width || 2),
+      type:  (obj.graph.border.type  || "sharp") // 'sharp' || 'round'
     },
     font: {
       color:  (obj.graph.font.color  || "#333"),
@@ -54,7 +55,7 @@ SVGGraph.graph.radarChart = function(obj) {
     values: { // default values for data lines
       color: (obj.graph.values.color || "#333"),
       fill: (obj.graph.values.fill  || "transparent"),
-      width: (obj.graph.values.color || 3)
+      width: (obj.graph.values.width || 3)
     }
   };
 
@@ -92,7 +93,7 @@ SVGGraph.graph.radarChart = function(obj) {
       var rotation = "rotate(0 0,0)";
       if (c.labels.rotate) {
         txtloc = [0, -c.radius-c.labels.padding];
-        var center = [0,0]
+        var center = [0,0];
         var turn = ((theta*180/Math.PI)+450)%360;
         if (turn > 90 && turn < 270) {
           turn += 180;
@@ -144,6 +145,7 @@ SVGGraph.graph.radarChart = function(obj) {
         }));
       }
     }
+    if (c.border.type == "sharp") {
     var d = "M" + border[0][0] + " " + border[0][1] + " ";
     for(var i = 1; i < border.length; i++) {
       d += "L " + border[i][0] + " " + border[i][1] + " ";
@@ -156,6 +158,17 @@ SVGGraph.graph.radarChart = function(obj) {
       "stroke-linejoin": "round",
       "stroke-width": c.border.width
     }));
+    } else {
+      svg.appendChild(SVGGraph.utils.createSVGElement('ellipse', {
+        cx: 0,
+        cy: 0,
+        rx: c.radius,
+        ry: c.radius,
+        fill: "transparent",
+        stroke: c.border.color,
+        "stroke-width": c.border.width
+      }));
+    }
   }
 
   function valueRadius(val) {

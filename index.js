@@ -62,6 +62,7 @@
       "show": [6,0,3,1,2,4,5],
       "size": 300,
       "graph": {
+        "border": { "type": "round" },
         "bounds": [0, 1, 0.5],
         "labels": { "rotate": true },
         "legend": 90
@@ -71,10 +72,19 @@
     document.body.appendChild(SVGGraph.graph.radarChart({
       "data": data,
       "keys": ["MSNBC", "Fox News Network"],
-      "show": [6,0,3],
+      "show": [6,0,3,1],
       "size": 500,
       "graph": {
+        "border": {
+          "width": 1
+        },
         "bounds": [0, 1, 0.25],
+        "guides": {
+          "color": "rgba(0,0,0,0.3)"
+        },
+        "values": {
+          "width": 1
+        },
         "legend": 250
       },
       "title": "Presidential Candidate Coverage"
