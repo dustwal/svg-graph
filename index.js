@@ -1,3 +1,5 @@
+// DISCLAIMER: all data in this file is fake. It is just used for example
+// purposes.
 (function () {
   function drawSVG() {
     var data = {
@@ -64,8 +66,8 @@
       "graph": {
         "border": { "type": "round" },
         "bounds": [0, 1, 0.5],
-        "labels": { "rotate": true },
-        "legend": 90
+        "legend": 90,
+        "radius": 0.65
       },
       "title": "Presidential Candidate Coverage"
     }));
@@ -80,7 +82,7 @@
         },
         "bounds": [0, 1, 0.25],
         "guides": {
-          "color": "rgba(0,0,0,0.3)"
+          "color": "rgba(0,0,0,0)"
         },
         "values": {
           "width": 1

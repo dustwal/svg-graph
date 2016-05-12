@@ -1,5 +1,5 @@
 var SVGGraph = {};
-SVGGraph.xmlns = 'http://www.w3.org/2000/svg'
+SVGGraph.xmlns = 'http://www.w3.org/2000/svg';
 SVGGraph.utils = {};
 SVGGraph.graph = {};
 
@@ -145,7 +145,7 @@ SVGGraph.graph.radarChart = function(obj) {
         }));
       }
     }
-    if (c.border.type == "sharp") {
+    if (c.border.type != "round") {
     var d = "M" + border[0][0] + " " + border[0][1] + " ";
     for(var i = 1; i < border.length; i++) {
       d += "L " + border[i][0] + " " + border[i][1] + " ";
@@ -154,11 +154,12 @@ SVGGraph.graph.radarChart = function(obj) {
     svg.appendChild(SVGGraph.utils.createSVGElement('path', {
       d: d,
       fill: "transparent",
-      stroke: c.border.color,
+      stroke: (c.border.type == "sharp" ? c.border.color : c.guides.color),
       "stroke-linejoin": "round",
-      "stroke-width": c.border.width
+      "stroke-width": (c.border.type == "sharp" ? c.border.width : c.guides.width)
     }));
-    } else {
+    }
+    if (c.border.type != "sharp") {
       svg.appendChild(SVGGraph.utils.createSVGElement('ellipse', {
         cx: 0,
         cy: 0,
