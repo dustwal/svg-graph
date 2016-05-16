@@ -1,5 +1,3 @@
-// DISCLAIMER: all data in this file is fake. It is just used for example
-// purposes.
 (function () {
   function drawSVG() {
     var container = document.body;
@@ -122,7 +120,7 @@
         },
         "legend": Math.min(250, xy[1]*container.clientWidth)
       },
-      "title": "2015 Temperatures"
+      "title": "2015 High/Low Temperatures"
     }));
   }
 
