@@ -26,6 +26,7 @@ SVGGraph.graph.radarChart = function(obj) {
   obj.graph.border = obj.graph.border || {};
   obj.graph.font = obj.graph.font || {};
   obj.graph.guides = obj.graph.guides || {};
+  obj.graph.guides.font = obj.graph.guides.font || {};
   obj.graph.labels = obj.graph.labels || {};
   obj.graph.values = obj.graph.values || {};
   var c = {
@@ -41,6 +42,14 @@ SVGGraph.graph.radarChart = function(obj) {
     },
     guides: {
       color: (obj.graph.guides.color || "#888"),
+      show: (obj.graph.guides.show || false),
+      font: {
+        color: (obj.graph.guides.font.color || obj.graph.font.color || "#333"),
+        family: (obj.graph.guides.font.family || obj.graph.font.family || "sans-serif"),
+        size: (obj.graph.guides.font.size ||
+            (obj.graph.font.size || obj.size/25)*0.8)
+      },
+      unit: (obj.graph.guides.unit || ""),
       width: (obj.graph.guides.width || 1)
     },
     labels: {
@@ -233,6 +242,21 @@ SVGGraph.graph.radarChart = function(obj) {
     }
   }
 
+  function drawScale() {
+    if(c.guides.show) {
+      for(var i = c.bounds[0]; i <= c.bounds[1]; i+=c.bounds[2]) {
+        svg.appendChild(SVGGraph.utils.createSVGElement('text', {
+          fill: c.guides.font.color,
+          x: -5,
+          y: c.guides.font.size/3-valueRadius(i),
+          "font-family": c.guides.font.family,
+          "font-size": c.guides.font.size,
+          "text-anchor": "end"
+        }, i+c.guides.unit));
+      }
+    }
+  }
+
   var svg = SVGGraph.utils.createSVG({
     height: c.size,
     viewBox: (-c.size/2) + " " + (-c.size/2) + " " +
@@ -251,5 +275,6 @@ SVGGraph.graph.radarChart = function(obj) {
     }, obj.title));
   }
   drawValues(svg);
+  drawScale();
   return svg;
 };
